@@ -3,6 +3,7 @@ const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const FortniteAPI = require('./services/fortniteApi');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 
 // Initialisation du client Discord
 const client = new Client({
@@ -88,3 +89,37 @@ if (!process.env.FORTNITE_API_KEY) {
 }
 
 client.login(process.env.DISCORD_TOKEN);
+
+// ========================================
+// Serveur HTTP pour Fly.io Health Checks
+// ========================================
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // ✅ IMPORTANT: Écouter sur 0.0.0.0 pour Fly.io
+
+const server = http.createServer((req, res) => {
+  // Health check endpoint
+  if (req.url === '/health' || req.url === '/') {
+    const status = {
+      status: 'ok',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      bot: {
+        ready: client.isReady(),
+        user: client.user?.tag || 'Not connected',
+        guilds: client.guilds.cache.size,
+        ping: client.ws.ping
+      }
+    };
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(status, null, 2));
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
+  }
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`🌐 Serveur HTTP démarré sur http://${HOST}:${PORT}`);
+  console.log(`✅ Health check disponible sur http://${HOST}:${PORT}/health`);
+});

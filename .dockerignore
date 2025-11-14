@@ -2,5 +2,11 @@
 /node_modules
 .dockerignore
 .env
+.env.local
 Dockerfile
 fly.toml
+npm-debug.log
+*.md
+.DS_Store
+test-api.js
+test-server.js
